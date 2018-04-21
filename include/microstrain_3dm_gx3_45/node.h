@@ -75,10 +75,14 @@ class imuNode {
 		bool publish_nav_odom_;
 		bool publish_nav_pose_;
 		bool publish_nav_fix_;
+                
+                int publish_gps_every_n_loops_;
 
 		bool zero_height_;
 
 		bool gps_fix_available_;
+                
+                int loop_counter_;
 
 		//bool nav_odom_rel_;
 

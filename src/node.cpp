@@ -14,6 +14,8 @@ using namespace ros;
 
 
 imuNode::imuNode() : nh_priv_("~") {
+    
+        loop_counter_ = 0;
 
 	param::param<string>("~port",port_,"/dev/ttyACM0");
 	param::param<int>("~baud_rate",baud_rate_,115200);
@@ -21,6 +23,8 @@ imuNode::imuNode() : nh_priv_("~") {
 	param::param<string>("~frame_id",frame_id_,"/imu_link");
 	param::param<string>("~child_frame_id",child_frame_id_,"/imu_link");
 	param::param<float>("~rate",rate_,10.0);
+        
+        param::param<int>("~publish_gps_every_n_loops",publish_gps_every_n_loops_,1);
 
 	param::param<bool>("~publish_pose",publish_pose_,true); // TODO make this in form publish/imu/pose
 	param::param<bool>("~publish_imu",publish_imu_,true);
@@ -262,6 +266,8 @@ void imuNode::spin() {
 	int gps_msg_cnt = 0;
 
 	while(ok()) {
+            
+                loop_counter_++;
 
 		if (publish_nav_odom_ || publish_nav_pose_ || publish_nav_fix_) {
 
@@ -545,7 +551,7 @@ void imuNode::spin() {
 
 		}
 
-		if (publish_gps_ && gps_pub_.getNumSubscribers() > 0) {
+		if (publish_gps_ && gps_pub_.getNumSubscribers() > 0 && ( (loop_counter_ % publish_gps_every_n_loops_) == 0)) {
 
 			ROS_INFO_ONCE("Publishing GPS as NavSatFix.");
 
