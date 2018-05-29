@@ -518,7 +518,7 @@ void imuNode::spin() {
 
 		}
 
-		if (publish_nav_fix_ && nav_fix_pub_.getNumSubscribers() > 0) {
+		if (publish_nav_fix_ && nav_fix_pub_.getNumSubscribers() > 0 && ( (loop_counter_ % publish_gps_every_n_loops_) == 0) ) {
 
 			ROS_INFO_ONCE("Publishing NAV as NavSatFix.");
 
@@ -583,7 +583,7 @@ void imuNode::spin() {
 
 		}
 
-		if (publish_gps_as_odom_ && gps_odom_pub_.getNumSubscribers() > 0) {
+		if (publish_gps_as_odom_ && gps_odom_pub_.getNumSubscribers() > 0 && ( (loop_counter_ % publish_gps_every_n_loops_) == 0)) {
 
 			ROS_INFO_ONCE("Publihing GPS as Odometry.");
 
