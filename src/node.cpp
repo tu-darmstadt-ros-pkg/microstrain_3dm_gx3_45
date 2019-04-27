@@ -40,6 +40,11 @@ imuNode::imuNode() : nh_priv_("~") {
 	param::param("~linear_acceleration_stdev", linear_acceleration_stdev_, 0.098);
 	param::param("~orientation_stdev", orientation_stdev_, 0.035);
 	param::param("~angular_velocity_stdev", angular_velocity_stdev_, 0.012);
+
+  device_time_translator_.reset(new cuckoo_time_translator::DefaultDeviceTimeUnwrapperAndTranslator(
+      cuckoo_time_translator::WrappingClockParameters(7 * 24 * 60 * 1E6, 1E6),
+      nh_priv_.getNamespace()));
+
 	
 	imu_.reset(new IMU((int)floor(rate_)));
 
@@ -433,7 +438,20 @@ void imuNode::spin() {
 
 			tahrs q = imu_->getAHRS();
 
-			imu.header.stamp.fromNSec(q.time);
+      ros::Time receive_time;
+      receive_time.fromNSec(q.time);
+      //imu.header.stamp.fromNSec(q.time);
+
+      uint64_t device_micro_seconds = static_cast<uint64_t> (q.gps_time_seconds * 1E6);
+
+      imu.header.stamp = device_time_translator_->update(device_micro_seconds, receive_time, -0.005);
+
+      double diff_receive_estimate = (receive_time - imu.header.stamp).toSec();
+
+      if ( (diff_receive_estimate > 0.1) || (diff_receive_estimate < 0.0) ){
+        imu.header.stamp = receive_time;
+        ROS_WARN_THROTTLE(10.0,"Translated IMU stamp diff implausible (%f), setting to receive time.", diff_receive_estimate);
+      }
 
 			imu.linear_acceleration.x = -q.ax * 9.80665;
 			imu.linear_acceleration.y =  q.ay * 9.80665;

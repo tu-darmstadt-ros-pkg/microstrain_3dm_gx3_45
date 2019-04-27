@@ -10,6 +10,8 @@
 #include <geodesy/utm.h>
 #include <geographic_msgs/GeoPoint.h>
 
+#include <cuckoo_time_translator/DeviceTimeTranslator.h>
+
 #ifndef NODE_H_
 #define NODE_H_
 
@@ -82,7 +84,9 @@ class imuNode {
 
 		bool gps_fix_available_;
                 
-                int loop_counter_;
+    int loop_counter_;
+
+    boost::shared_ptr<cuckoo_time_translator::DefaultDeviceTimeUnwrapperAndTranslator> device_time_translator_;
 
 		//bool nav_odom_rel_;
 

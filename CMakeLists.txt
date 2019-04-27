@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(microstrain_3dm_gx3_45)
 
+add_compile_options(-std=c++11)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
@@ -8,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   geodesy
   geographic_msgs
+  cuckoo_time_translator
 )
 
 
@@ -19,6 +22,7 @@ catkin_package(
   geometry_msgs
   geodesy
   geographic_msgs
+  cuckoo_time_translator
 )
 
 include_directories(

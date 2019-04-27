@@ -44,6 +44,9 @@ namespace microstrain_3dm_gx3_45 {
 
 		uint64_t time;
 
+    double   gps_time_seconds;
+    uint16_t gps_time_week;
+
 	} tahrs;
 
 	typedef struct {

@@ -546,9 +546,8 @@ bool IMU::pollAHRS() {
 
   }
 
-  double seconds = extractDouble(&recv[46]); // 0x0C
-  uint16_t week = (recv[46+9] << 8) + recv[46+8];
-  //ahrs_data_.y = extractFloat(&recv[46+10]);
+  ahrs_data_.gps_time_seconds = extractDouble(&recv[46]);
+  ahrs_data_.gps_time_week    = (recv[46+9] << 8) + recv[46+8];
 
 	/*quat.q0 = extractFloat(&recv[6]);
 	quat.q1 = extractFloat(&recv[6+4]);
