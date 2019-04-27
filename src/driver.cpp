@@ -488,7 +488,7 @@ bool IMU::pollAHRS() {
 
 	tbyte_array recv;
 
-	size_t n = 46; // TODO this is really stupid... there must be some parsing etc....
+  size_t n = 60; // TODO this is really stupid... there must be some parsing etc....
 
 	struct timespec curtime;
 	clock_gettime(CLOCK_REALTIME, &curtime);
@@ -537,6 +537,18 @@ bool IMU::pollAHRS() {
 	ahrs_data_.r = extractFloat(&recv[32]); // 0x0C
 	ahrs_data_.p = extractFloat(&recv[32+4]);
 	ahrs_data_.y = extractFloat(&recv[32+8]);
+
+  // GPS stamp
+  if (recv[44] != 0x0E || recv[45] != 0x12) {
+
+    errMsg("AHRS: Wrong msg format (0x12).");
+    return false;
+
+  }
+
+  double seconds = extractDouble(&recv[46]); // 0x0C
+  uint16_t week = (recv[46+9] << 8) + recv[46+8];
+  //ahrs_data_.y = extractFloat(&recv[46+10]);
 
 	/*quat.q0 = extractFloat(&recv[6]);
 	quat.q1 = extractFloat(&recv[6+4]);
@@ -724,6 +736,10 @@ bool IMU::setAHRSMsgFormat() {
 	data.push_back(0x0C); // euler angles
 	data.push_back(0x0);
 	data.push_back(100/rate_); // rate decimation -> 20 Hz
+
+  data.push_back(0x12); // GPS TS
+  data.push_back(0x0);
+  data.push_back(100/rate_);
 
 	crc(data);
 	write(data);
