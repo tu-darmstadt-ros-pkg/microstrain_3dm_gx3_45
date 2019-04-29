@@ -443,8 +443,15 @@ void imuNode::spin() {
       //imu.header.stamp.fromNSec(q.time);
 
       uint64_t device_micro_seconds = static_cast<uint64_t> (q.gps_time_seconds * 1E6);
+      
+      
 
       imu.header.stamp = device_time_translator_->update(device_micro_seconds, receive_time, -0.005);
+      
+      ROS_INFO_STREAM("Rec time: " << receive_time.toSec() <<
+                      " dev gps: " << q.gps_time_seconds <<
+                      " microsecs: " <<  device_micro_seconds <<
+                      " corrected time: " <<  imu.header.stamp.toSec());
 
       double diff_receive_estimate = (receive_time - imu.header.stamp).toSec();
 
