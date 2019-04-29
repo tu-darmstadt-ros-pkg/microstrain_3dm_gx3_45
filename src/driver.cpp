@@ -527,6 +527,7 @@ bool IMU::pollAHRS() {
 	ahrs_data_.gy = extractFloat(&recv[18+4]);
 	ahrs_data_.gz = extractFloat(&recv[18+8]);
 
+        /*
 	if (recv[30] != 0x0E || recv[31] != 0x0C) {
 
 		errMsg("AHRS: Wrong msg format (0x0C).");
@@ -548,6 +549,16 @@ bool IMU::pollAHRS() {
 
   ahrs_data_.gps_time_seconds = extractDouble(&recv[46]);
   ahrs_data_.gps_time_week    = (recv[46+9] << 8) + recv[46+8];
+        */
+        if (recv[30] != 0x0E || recv[31] != 0x12) {
+
+          errMsg("AHRS: Wrong msg format (0x12).");
+          return false;
+
+        }
+
+        ahrs_data_.gps_time_seconds = extractDouble(&recv[32]);
+        ahrs_data_.gps_time_week    = (recv[32+9] << 8) + recv[32+8];
 
 	/*quat.q0 = extractFloat(&recv[6]);
 	quat.q1 = extractFloat(&recv[6+4]);
@@ -732,13 +743,13 @@ bool IMU::setAHRSMsgFormat() {
 	data.push_back(0x0);
 	data.push_back(100/rate_); // 20 Hz
 
-	data.push_back(0x0C); // euler angles
-	data.push_back(0x0);
-	data.push_back(100/rate_); // rate decimation -> 20 Hz
+	//data.push_back(0x0C); // euler angles
+	//data.push_back(0x0);
+	//data.push_back(100/rate_); // rate decimation -> 20 Hz
 
-  data.push_back(0x12); // GPS TS
-  data.push_back(0x0);
-  data.push_back(100/rate_);
+        data.push_back(0x12); // GPS TS
+        data.push_back(0x0);
+        data.push_back(100/rate_);
 
 	crc(data);
 	write(data);
