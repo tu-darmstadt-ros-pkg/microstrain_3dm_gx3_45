@@ -16,6 +16,7 @@ using namespace ros;
 imuNode::imuNode() : nh_priv_("~") {
     
         loop_counter_ = 0;
+        last_device_microseconds_ = 0;
 
 	param::param<string>("~port",port_,"/dev/ttyACM0");
 	param::param<int>("~baud_rate",baud_rate_,115200);
@@ -438,48 +439,53 @@ void imuNode::spin() {
 
 			tahrs q = imu_->getAHRS();
 
-      ros::Time receive_time;
-      receive_time.fromNSec(q.time);
-      //imu.header.stamp.fromNSec(q.time);
-
-      uint64_t device_micro_seconds = static_cast<uint64_t> (q.gps_time_seconds * 1E6);
+                        ros::Time receive_time;
+                        receive_time.fromNSec(q.time);
       
+                        uint64_t device_micro_seconds = static_cast<uint64_t> (q.gps_time_seconds * 1E6);
       
-
-      imu.header.stamp = device_time_translator_->update(device_micro_seconds, receive_time, -0.005);
+                        // @TODO: Note this won't work with wrap-around
+                        if ( !(device_micro_seconds > last_device_microseconds_)){
+                            ROS_WARN_STREAM("curr microsec: " << device_micro_seconds << " not monotonically increasing wrt to previous: " << last_device_microseconds_ << " . Skipping IMU publishing!");
+                  
+                        }else{
+                            imu.header.stamp = device_time_translator_->update(device_micro_seconds, receive_time, -0.005);
+      
+                            last_device_microseconds_ = device_micro_seconds;
      
-      double diff_receive_estimate = (receive_time - imu.header.stamp).toSec();
+                            double diff_receive_estimate = (receive_time - imu.header.stamp).toSec();
       
-      /*
-      ROS_INFO_STREAM("Rec time: " << receive_time.toNSec() <<
-                      " dev gps: " << q.gps_time_seconds <<
-                      " microsecs: " <<  device_micro_seconds <<
-                      " corrected time: " <<  imu.header.stamp.toNSec() <<
-                      " diff_rec_estimate: " << diff_receive_estimate);
-      */
+                            /*
+                            ROS_INFO_STREAM("Rec time: " << receive_time.toNSec() <<
+                                        " dev gps: " << q.gps_time_seconds <<
+                                        " microsecs: " <<  device_micro_seconds <<
+                                        " corrected time: " <<  imu.header.stamp.toNSec() <<
+                                        " diff_rec_estimate: " << diff_receive_estimate);
+                            */
 
-      if ( (diff_receive_estimate > 0.1) || (diff_receive_estimate < 0.0) ){
-        imu.header.stamp = receive_time;
-        ROS_WARN_THROTTLE(10.0,"Translated IMU stamp diff implausible (%f), setting to receive time.", diff_receive_estimate);
-      }
+                            if ( (diff_receive_estimate > 0.1) || (diff_receive_estimate < 0.0) ){
+                                imu.header.stamp = receive_time;
+                                ROS_WARN_THROTTLE(10.0,"Translated IMU stamp diff implausible (%f), setting to receive time.", diff_receive_estimate);
+                            }
 
-			imu.linear_acceleration.x = -q.ax * 9.80665;
-			imu.linear_acceleration.y =  q.ay * 9.80665;
-			imu.linear_acceleration.z = -q.az * 9.80665;
+                            imu.linear_acceleration.x = -q.ax * 9.80665;
+                            imu.linear_acceleration.y =  q.ay * 9.80665;
+                            imu.linear_acceleration.z = -q.az * 9.80665;
 
-			imu.angular_velocity.x = -q.gx;
-			imu.angular_velocity.y = q.gy;
-			imu.angular_velocity.z = -q.gz;
+                            imu.angular_velocity.x = -q.gx;
+                            imu.angular_velocity.y = q.gy;
+                            imu.angular_velocity.z = -q.gz;
 
-			float yaw = q.y;
+                            float yaw = q.y;
 
-            // TODO is this needed?
-			yaw+=M_PIl;
-			if (yaw > M_PIl) yaw-=2*M_PIl;
+                            // TODO is this needed?
+                            //yaw+=M_PIl;
+                            //if (yaw > M_PIl) yaw-=2*M_PIl;
 
-			tf::quaternionTFToMsg(tf::createQuaternionFromRPY(-q.r, q.p, -yaw), imu.orientation);
+                            //tf::quaternionTFToMsg(tf::createQuaternionFromRPY(-q.r, q.p, -yaw), imu.orientation);
 
-			imu_data_pub_.publish(imu);
+                            imu_data_pub_.publish(imu);
+                        }
 
 		}
 

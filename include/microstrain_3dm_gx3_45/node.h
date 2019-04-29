@@ -84,9 +84,11 @@ class imuNode {
 
 		bool gps_fix_available_;
                 
-    int loop_counter_;
+                int loop_counter_;
 
-    boost::shared_ptr<cuckoo_time_translator::DefaultDeviceTimeUnwrapperAndTranslator> device_time_translator_;
+                boost::shared_ptr<cuckoo_time_translator::DefaultDeviceTimeUnwrapperAndTranslator> device_time_translator_;
+                
+                uint64_t last_device_microseconds_;
 
 		//bool nav_odom_rel_;
 
