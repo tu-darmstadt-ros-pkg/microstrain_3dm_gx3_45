@@ -488,7 +488,7 @@ bool IMU::pollAHRS() {
 
 	tbyte_array recv;
 
-  size_t n = 60; // TODO this is really stupid... there must be some parsing etc....
+  size_t n = 46; // TODO this is really stupid... there must be some parsing etc....
 
 	struct timespec curtime;
 	clock_gettime(CLOCK_REALTIME, &curtime);
