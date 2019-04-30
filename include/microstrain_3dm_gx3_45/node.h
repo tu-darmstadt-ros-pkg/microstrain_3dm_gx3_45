@@ -90,6 +90,8 @@ class imuNode {
                 
                 uint64_t last_device_microseconds_;
 
+                float transmit_latency_offset_;
+
 		//bool nav_odom_rel_;
 
 	private:

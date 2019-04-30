@@ -24,6 +24,10 @@ imuNode::imuNode() : nh_priv_("~") {
 	param::param<string>("~frame_id",frame_id_,"/imu_link");
 	param::param<string>("~child_frame_id",child_frame_id_,"/imu_link");
 	param::param<float>("~rate",rate_,10.0);
+
+  param::param<float>("~transmit_latency_offset",transmit_latency_offset_, -0.005);
+
+
         
         param::param<int>("~publish_gps_every_n_loops",publish_gps_every_n_loops_,1);
 
@@ -444,14 +448,20 @@ void imuNode::spin() {
       
                         uint64_t device_micro_seconds = static_cast<uint64_t> (q.gps_time_seconds * 1E6);
       
-                        // @TODO: Note this won't work with wrap-around
-                        if ( !(device_micro_seconds > last_device_microseconds_)){
-                            ROS_WARN_STREAM("curr microsec: " << device_micro_seconds << " not monotonically increasing wrt to previous: " << last_device_microseconds_ << " . Skipping IMU publishing!");
-                  
-                        }else{
-                            imu.header.stamp = device_time_translator_->update(device_micro_seconds, receive_time, -0.005);
+                        // @TODO: Note this might not work on wrap-around
+                        // if device micro seconds smaller than previous or more than 100ms newer
+                        if ( !(device_micro_seconds > last_device_microseconds_) || ((device_micro_seconds - last_device_microseconds_) > 1E5) ){
+                            ROS_WARN_STREAM("curr microsec: " << device_micro_seconds << " not monotonically increasing or to far spaced wrt to previous: " << last_device_microseconds_ << " . Resetting translator!");
+
+                            // Time translator will forward receive time for first few samples after reset
+                            device_time_translator_.reset(new cuckoo_time_translator::DefaultDeviceTimeUnwrapperAndTranslator(
+                                cuckoo_time_translator::WrappingClockParameters(7 * 24 * 60 * 1E6, 1E6),
+                                nh_priv_.getNamespace()));
+                        }
+
+                            imu.header.stamp = device_time_translator_->update(device_micro_seconds, receive_time, transmit_latency_offset_);
       
-                            last_device_microseconds_ = device_micro_seconds;
+
      
                             double diff_receive_estimate = (receive_time - imu.header.stamp).toSec();
       
@@ -464,7 +474,7 @@ void imuNode::spin() {
                             */
 
                             if ( (diff_receive_estimate > 0.1) || (diff_receive_estimate < 0.0) ){
-                                imu.header.stamp = receive_time;
+                                imu.header.stamp = receive_time + ros::Duration(transmit_latency_offset_);
                                 ROS_WARN_THROTTLE(10.0,"Translated IMU stamp diff implausible (%f), setting to receive time.", diff_receive_estimate);
                             }
 
@@ -476,7 +486,7 @@ void imuNode::spin() {
                             imu.angular_velocity.y = q.gy;
                             imu.angular_velocity.z = -q.gz;
 
-                            float yaw = q.y;
+                            //float yaw = q.y;
 
                             // TODO is this needed?
                             //yaw+=M_PIl;
@@ -485,7 +495,9 @@ void imuNode::spin() {
                             //tf::quaternionTFToMsg(tf::createQuaternionFromRPY(-q.r, q.p, -yaw), imu.orientation);
 
                             imu_data_pub_.publish(imu);
-                        }
+
+
+                        last_device_microseconds_ = device_micro_seconds;
 
 		}
 
