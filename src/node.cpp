@@ -88,7 +88,7 @@ bool imuNode::init() {
 	started_ = false;
 
 	ROS_INFO("Pinging device");
-	imu_->setTimeout(posix_time::seconds(0.5));
+	imu_->setTimeout(posix_time::milliseconds(500));
 	if (!imu_->ping()) {
 
 		printErrMsgs("Pinging device");
