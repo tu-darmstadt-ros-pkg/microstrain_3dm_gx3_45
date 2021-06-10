@@ -567,8 +567,8 @@ void imuNode::spin() {
 			if (g.lat_lon_valid) gps.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
 			else gps.status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
 
-			if (!g.hor_acc_valid) gps.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
-			else {
+			//if (!g.hor_acc_valid) gps.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+			//else {
 
 				//gps.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 				gps.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_APPROXIMATED;
@@ -577,7 +577,7 @@ void imuNode::spin() {
 				gps.position_covariance[4] = g.horizontal_accuracy * g.horizontal_accuracy;
 				gps.position_covariance[8] = 100.0; // TODO add this to driver
 
-			}
+			// }
 
 			gps_pub_.publish(gps);
 
